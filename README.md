@@ -1,67 +1,22 @@
-# Teseliso y Alhambra
+# Alhambra y Teseliso
 
 Dos generadores de teselaciones que funcionan en el navegador. Cada uno es una única página HTML, sin instalación ni servidor.
 
 | Programa | Qué genera | Abrir | Archivo |
 |---|---|---|---|
-| **Teseliso** | Teselaciones con **una sola forma** repetida, al estilo de Escher | [rpdaniels.github.io/teseladores/Teseliso.html](https://rpdaniels.github.io/teseladores/Teseliso.html) | [`Teseliso.html`](Teseliso.html) |
 | **Alhambra** | Lazos islámicos con **muchas formas combinadas**: estrellas, rosetas y rombos | [rpdaniels.github.io/teseladores/Alhambra.html](https://rpdaniels.github.io/teseladores/Alhambra.html) | [`Alhambra.html`](Alhambra.html) |
+| **Teseliso** | Teselaciones con **una sola forma** repetida, al estilo de Escher | [rpdaniels.github.io/teseladores/Teseliso.html](https://rpdaniels.github.io/teseladores/Teseliso.html) | [`Teseliso.html`](Teseliso.html) |
+
 
 Los dos generan diseños al azar y permiten elegir el tipo de teselación y la paleta de colores. También se puede desplazar el dibujo arrastrándolo y copiar la vista actual como SVG.
 
 ---
 
-## Teseliso
-
-### Qué es
-
-Teseliso dibuja **teselaciones isoédricas**. En ellas todas las piezas son copias de una misma forma, y cualquier pieza puede llevarse sobre cualquier otra con una simetría del patrón completo. Son las teselaciones de los dibujos periódicos de Escher.
-
-### Fundamento matemático
-
-- **Grünbaum y Shephard (1977)** demostraron que existen exactamente **93 tipos** de teselaciones isoédricas, numerados IH1–IH93.
-- **Heesch** había clasificado antes los **28 tipos** que admiten piezas asimétricas.
-- **Escher** desarrolló por su cuenta un sistema parecido en sus cuadernos.
-- Teseliso incluye los **81 tipos** que admiten una forma propia. Los 12 restantes son variantes degeneradas de otros tipos.
-
-Cada tipo parte de un polígono base (triángulo, cuadrilátero, pentágono o hexágono). Sus lados pueden deformarse según cuatro reglas, que la ficha indica con una letra:
-
-| Letra | Tipo de borde | Restricción |
-|---|---|---|
-| **J** | Libre | Cualquier curva |
-| **U** | Espejo | Simétrico respecto a su punto medio por reflexión |
-| **S** | Giro | Simétrico por un giro de 180° alrededor de su centro |
-| **I** | Recto | Debe ser un segmento recto |
-
-### Cómo se genera una pieza
-
-1. Se toman los parámetros del tipo elegido y se deforman al azar. Cambian las proporciones y los ángulos del polígono base.
-2. Cada borde se curva con una serie de senos. Las simetrías U y S se garantizan eligiendo solo armónicos pares o impares, según el caso.
-3. Si el contorno se cruza consigo mismo, se rechaza y se vuelve a generar con menos curvatura.
-4. La pieza se repite por el plano con las simetrías propias del tipo.
-
-### Controles
-
-- **Nueva tesela** (`Espacio`): nueva forma con el mismo tipo.
-- **Tipo al azar** (`T`) y **Todo al azar**, que cambia también la paleta y el coloreado.
-- **Tipo de teselación:** desplegable agrupado por polígono base, o el catálogo de miniaturas de los 81 tipos. Las flechas `←` `→` pasan al tipo anterior o siguiente.
-- **Paleta:** Escher, Alhambra, Delft, Bauhaus, Arrecife, Otoño, Pizarra, Pastel, Nocturno, Tinta, Jade, o una **propia** con selectores de color.
-- **Coloreado:**
-  - *Teselado:* la coloración propia del tipo; dos piezas vecinas nunca comparten color.
-  - *Orientación:* un color por cada orientación de la pieza.
-  - *Azar:* color aleatorio por pieza.
-  - *Único:* todas las piezas del mismo color.
-- **Deslizadores:** curvatura de los bordes, complejidad del contorno, deformación del polígono, tamaño de pieza y grosor de línea.
-- **Opciones:** mostrar el polígono base, resaltar la pieza prototipo y relieve suave.
-- **Ficha técnica:** código IH, polígono, número de orientaciones, tipos de borde y semilla del diseño.
-
-### Requisitos
-
-Teseliso carga la biblioteca **Tactile** (Craig S. Kaplan, licencia BSD de 3 cláusulas) desde jsDelivr. Necesita conexión a internet la primera vez que se abre.
-
 ---
 
 ## Alhambra
+
+![Alhambra](https://github.com/RPDaniels/teseladores/blob/main/alhambra.png)
 
 ### Qué es
 
@@ -136,6 +91,59 @@ Alhambra no necesita bibliotecas externas y funciona sin conexión, salvo las ti
 - **Bordes de Penrose:** como es un parche finito, si se arrastra mucho el paño se llega a su borde.
 - **Cruces en polígonos cóncavos:** en lacería, los cruces internos se dibujan como uniones, sin el efecto de «por encima y por debajo».
 - **Estrellas de 10 y 16:** se obtienen con tramas concretas (girih y hexadecágonos), no con un sistema general de polígonos no regulares.
+
+---
+
+
+## Teseliso
+
+![Teseliso](https://github.com/RPDaniels/teseladores/blob/main/teseliso.png)
+
+### Qué es
+
+Teseliso dibuja **teselaciones isoédricas**. En ellas todas las piezas son copias de una misma forma, y cualquier pieza puede llevarse sobre cualquier otra con una simetría del patrón completo. Son las teselaciones de los dibujos periódicos de Escher.
+
+### Fundamento matemático
+
+- **Grünbaum y Shephard (1977)** demostraron que existen exactamente **93 tipos** de teselaciones isoédricas, numerados IH1–IH93.
+- **Heesch** había clasificado antes los **28 tipos** que admiten piezas asimétricas.
+- **Escher** desarrolló por su cuenta un sistema parecido en sus cuadernos.
+- Teseliso incluye los **81 tipos** que admiten una forma propia. Los 12 restantes son variantes degeneradas de otros tipos.
+
+Cada tipo parte de un polígono base (triángulo, cuadrilátero, pentágono o hexágono). Sus lados pueden deformarse según cuatro reglas, que la ficha indica con una letra:
+
+| Letra | Tipo de borde | Restricción |
+|---|---|---|
+| **J** | Libre | Cualquier curva |
+| **U** | Espejo | Simétrico respecto a su punto medio por reflexión |
+| **S** | Giro | Simétrico por un giro de 180° alrededor de su centro |
+| **I** | Recto | Debe ser un segmento recto |
+
+### Cómo se genera una pieza
+
+1. Se toman los parámetros del tipo elegido y se deforman al azar. Cambian las proporciones y los ángulos del polígono base.
+2. Cada borde se curva con una serie de senos. Las simetrías U y S se garantizan eligiendo solo armónicos pares o impares, según el caso.
+3. Si el contorno se cruza consigo mismo, se rechaza y se vuelve a generar con menos curvatura.
+4. La pieza se repite por el plano con las simetrías propias del tipo.
+
+### Controles
+
+- **Nueva tesela** (`Espacio`): nueva forma con el mismo tipo.
+- **Tipo al azar** (`T`) y **Todo al azar**, que cambia también la paleta y el coloreado.
+- **Tipo de teselación:** desplegable agrupado por polígono base, o el catálogo de miniaturas de los 81 tipos. Las flechas `←` `→` pasan al tipo anterior o siguiente.
+- **Paleta:** Escher, Alhambra, Delft, Bauhaus, Arrecife, Otoño, Pizarra, Pastel, Nocturno, Tinta, Jade, o una **propia** con selectores de color.
+- **Coloreado:**
+  - *Teselado:* la coloración propia del tipo; dos piezas vecinas nunca comparten color.
+  - *Orientación:* un color por cada orientación de la pieza.
+  - *Azar:* color aleatorio por pieza.
+  - *Único:* todas las piezas del mismo color.
+- **Deslizadores:** curvatura de los bordes, complejidad del contorno, deformación del polígono, tamaño de pieza y grosor de línea.
+- **Opciones:** mostrar el polígono base, resaltar la pieza prototipo y relieve suave.
+- **Ficha técnica:** código IH, polígono, número de orientaciones, tipos de borde y semilla del diseño.
+
+### Requisitos
+
+Teseliso carga la biblioteca **Tactile** (Craig S. Kaplan, licencia BSD de 3 cláusulas) desde jsDelivr. Necesita conexión a internet la primera vez que se abre.
 
 ---
 
