@@ -1,0 +1,969 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Alhambra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: taller de alicatado — panel de control a la izquierda, paño de azulejo infinito a la derecha; en móvil, paño arriba */
+:root{
+  --paper:#ECEFF2; --panel:#F8F9FA; --ink:#141820; --muted:#5A6472; --rule:#D2D8DF;
+  --accent:#1F4A8A; --accent-ink:#FFFFFF; --grid:rgba(20,24,32,.05);
+  --display:"Marcellus", "Trajan Pro", "Optima", Georgia, serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0E1116; --panel:#151A21; --ink:#E5E9EE; --muted:#97A2B0; --rule:#28303A;
+  --accent:#8DB0EA; --accent-ink:#0B1424; --grid:rgba(229,233,238,.04); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0E1116; --panel:#151A21; --ink:#E5E9EE; --muted:#97A2B0; --rule:#28303A;
+  --accent:#8DB0EA; --accent-ink:#0B1424; --grid:rgba(229,233,238,.04); color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+*{box-sizing:border-box}
+.app{display:grid;grid-template-columns:340px minmax(0,1fr);height:100%}
+aside{background:var(--panel);border-right:1px solid var(--rule);overflow-y:auto;
+  padding-block:22px 28px;padding-left:max(18px, env(safe-area-inset-left, 0px));padding-right:18px;
+  display:flex;flex-direction:column;gap:22px;min-width:0}
+main{position:relative;min-width:0;overflow:hidden;background:var(--paper)}
+canvas#view{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+canvas#view.drag{cursor:grabbing}
+
+header h1{font-family:var(--display);font-weight:400;font-size:38px;line-height:1;margin:0;letter-spacing:.06em;text-transform:uppercase}
+header p{margin:8px 0 0;color:var(--muted);max-width:36ch}
+
+section{display:flex;flex-direction:column;gap:10px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.label output{font-family:var(--mono);text-transform:none;letter-spacing:0;color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-weight:600;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);
+  padding:9px 12px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{border-color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);grid-column:1/-1;font-size:15px;padding:11px}
+button.primary:hover{filter:brightness(1.08)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--rule);border-bottom-width:2px;border-radius:4px;padding:0 4px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+select{font:inherit;width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--rule);background:var(--paper);color:var(--ink)}
+
+.palettes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.swatch{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);cursor:pointer;font-size:12.5px;text-align:left;font-weight:500}
+.swatch[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.chips{display:flex;flex-shrink:0;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.chips i{display:block;width:8px;height:18px}
+.custom{display:none;grid-template-columns:repeat(4,1fr);gap:6px}
+.custom.on{display:grid}
+.custom label{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--muted);text-align:center}
+.custom input{width:100%;height:28px;border:1px solid var(--rule);border-radius:4px;padding:0;background:none}
+
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;font-weight:500;font-size:12px;padding:7px 4px;background:var(--paper)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggles{display:flex;flex-direction:column;gap:6px}
+.toggles label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggles input{accent-color:var(--accent);width:16px;height:16px}
+
+.catalog{display:flex;flex-direction:column;gap:12px}
+.group-title{font-family:var(--display);font-size:16px;display:flex;justify-content:space-between;align-items:baseline;letter-spacing:.02em}
+.group-title span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.bases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.base{padding:0;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--paper);display:flex;flex-direction:column;text-align:left;font-weight:500}
+.base canvas{display:block;width:100%;aspect-ratio:1;max-width:100%}
+.base span{font-family:var(--mono);font-size:11px;padding:4px 6px;border-top:1px solid var(--rule);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.base[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+
+.about{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:16px}
+.about p{margin:0 0 8px;max-width:60ch}
+.about a{color:var(--accent)}
+
+.card{position:absolute;left:max(16px, env(safe-area-inset-left, 0px));bottom:max(16px, env(safe-area-inset-bottom, 0px));
+  background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;max-width:min(400px,calc(100% - 32px));
+  box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:8px}
+.card .code{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .code strong{font-family:var(--display);font-weight:400;font-size:26px;line-height:1;letter-spacing:.03em}
+.card .code span{color:var(--muted)}
+.shapes{display:flex;flex-wrap:wrap;gap:5px}
+.shape{display:flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--rule);border-radius:4px;padding:2px 7px 2px 4px;background:var(--paper)}
+.shape i{width:12px;height:12px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+.meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.toolbar{position:absolute;top:max(14px, env(safe-area-inset-top, 0px));right:max(14px, env(safe-area-inset-right, 0px));display:flex;gap:6px}
+.toolbar button{background:var(--panel);font-size:12.5px;padding:7px 11px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.toast{position:absolute;top:max(14px, env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+  padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:62vh auto;height:auto}
+  main{order:-1;height:62vh}
+  aside{border-right:0;border-top:1px solid var(--rule);overflow:visible;padding-right:max(16px, env(safe-area-inset-right, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px))}
+  .card{padding:9px 11px}
+  .card .code strong{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside>
+    <header>
+      <h1>Alhambra</h1>
+      <p>Lazos nazaríes generados al azar: estrellas, rosetas y rombos que nacen de combinar polígonos regulares.</p>
+    </header>
+
+    <section class="actions">
+      <button class="primary" id="regen">Nuevo diseño</button>
+      <button id="recolor">Otros colores</button>
+      <button id="randAll">Todo al azar</button>
+    </section>
+
+
+    <section>
+      <div class="label"><span>Trama</span><output id="baseOut2"></output></div>
+      <select id="baseSel" aria-label="Trama de polígonos"></select>
+    </section>
+
+    <section>
+      <div class="label"><span>Acabado</span></div>
+      <div class="seg" id="mode">
+        <button data-v="mosaic" title="Piezas de color separadas por una línea fina">Mosaico</button>
+        <button data-v="lace" title="Cintas entrelazadas que pasan por encima y por debajo">Lacería</button>
+        <button data-v="line" title="Solo el trazado del lazo, sin color en las piezas">Trazado</button>
+        <button data-v="base" title="La trama de polígonos regulares de la que nace el lazo">Trama</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="label"><span>Paleta</span></div>
+      <div class="palettes" id="palettes"></div>
+      <div class="custom" id="custom"></div>
+    </section>
+
+    <section>
+      <div class="label"><span>Ángulo de contacto</span><output id="thetaOut"></output></div>
+      <input type="range" id="theta" min="30" max="80" step="0.5" value="67.5" aria-label="Ángulo de contacto">
+      <div class="label"><span>Separación en el borde</span><output id="deltaOut"></output></div>
+      <input type="range" id="delta" min="0" max="20" step="0.5" value="0" aria-label="Separación">
+      <div class="label"><span>Tamaño de la roseta</span><output id="rosSizeOut"></output></div>
+      <input type="range" id="rosSize" min="0.35" max="0.9" step="0.01" value="0.62" aria-label="Tamaño de la roseta">
+      <div class="label"><span>Tamaño</span><output id="sizeOut"></output></div>
+      <input type="range" id="size" min="20" max="160" value="62" aria-label="Tamaño">
+      <div class="label"><span>Anchura de cinta</span><output id="bandOut"></output></div>
+      <input type="range" id="band" min="2" max="24" step="0.5" value="8" aria-label="Anchura de cinta">
+      <div class="label"><span>Grosor de línea</span><output id="lwOut"></output></div>
+      <input type="range" id="lw" min="0" max="5" step="0.25" value="1.25" aria-label="Grosor de línea">
+    </section>
+
+    <section class="toggles">
+      <label><input type="checkbox" id="rosette"> Rosetas en polígonos de 6 o más lados</label>
+      <label><input type="checkbox" id="varAngles"> Un ángulo distinto para cada tipo de polígono</label>
+      <label><input type="checkbox" id="showBase"> Superponer la trama de polígonos</label>
+    </section>
+
+    <section class="catalog-sec">
+      <div class="label"><span>Trama de polígonos</span><output id="baseOut"></output></div>
+      <div id="bases" class="catalog"></div>
+    </section>
+
+    <section class="about">
+      <p>Los alicatados de la Alhambra se construyen sobre una trama oculta de polígonos regulares. Desde el punto medio de cada lado salen dos rectas con el mismo <em>ángulo de contacto</em>; al cortarse dibujan una estrella dentro de cada polígono y una roseta alrededor de cada vértice. Si se separan en el borde aparecen rombos, y con la opción de rosetas la estrella de los polígonos grandes se abre en un anillo de pétalos, como en los grandes lazos de 12. Es el método que describió Hankin en 1925, sistematizado después por Kaplan.</p>
+      <p>Las <b>arquimedianas</b> son las 11 teselaciones con un solo tipo de vértice; la notación indica qué polígonos se encuentran en él. Las <b>derivadas</b> salen de dividir algunos de sus polígonos (un dodecágono en un hexágono, 6 cuadrados y 6 triángulos; un hexágono en 6 triángulos) y mezclan varios tipos de vértice, como las teselaciones 2- y 3-uniformes.</p>
+      <p>El grupo <b>girih y no periódicas</b> usa polígonos que no son regulares. Los decágonos con pajaritas dan el girih persa de 10 (con rosetas, la estrella de diez rodeada de pentágonos); los hexadecágonos dan las estrellas de 16 de los zócalos nazaríes. En los huecos cóncavos cada recta se une a la más cercana. La trama de <b>Penrose</b> no se repite nunca: es un parche de casi 8.000 rombos con simetría de orden 5, emparentado con los lazos cuasiperiódicos del santuario Darb-i Imam de Isfahán.</p>
+      <p>Con 4.8.8 y 67,5° sale la estrella de ocho del Salón de Comares; con 3.12.12, 60° y rosetas, el gran lazo de doce; con 16.16 y rosetas, el de dieciséis.</p>
+      <p>Atajos: <kbd>Espacio</kbd> nuevo diseño · <kbd>C</kbd> otros colores · <kbd>←</kbd><kbd>→</kbd> trama anterior/siguiente · arrastra el paño para desplazarlo.</p>
+    </section>
+  </aside>
+
+  <main id="stage">
+    <canvas id="view" aria-label="Patrón generado"></canvas>
+    <div class="toolbar">
+      <button id="copySvg">Copiar SVG</button>
+      <button id="center">Centrar</button>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="card" aria-live="polite">
+      <div class="code"><strong id="cCode"></strong><span id="cName"></span></div>
+      <div class="shapes" id="cShapes"></div>
+      <div class="meta" id="cMeta"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// GEO-START
+const SQ3 = Math.sqrt(3), H3 = SQ3 / 2, RAD = Math.PI / 180;
+const A12 = (2 + SQ3) / 2;                // apotema del dodecágono de lado 1
+const L8 = 1 + Math.SQRT2, A8 = L8 / 2;   // periodo y apotema del octógono
+const D4612 = 2 * A12 + 1, D3464 = SQ3 + 1;
+const ASN = Math.sqrt(2 + SQ3), RSN = 0.5 + SQ3 / 6, RHT = H3 + SQ3 / 6; // tramas achatadas
+
+// Tramas arquimedianas: celda de traslación T1, T2 y polígonos [cx, cy, lados, giro°]
+const BASES = [
+  { code:"4.8.8",  name:"Octógonos y cuadrados", T1:[L8,0], T2:[0,L8],
+    polys:[[0,0,8,22.5],[A8,A8,4,0]], theta:67.5 },
+  { code:"3.12.12", name:"Dodecágonos y triángulos", T1:[2*A12,0], T2:[A12,A12*SQ3],
+    polys:[[0,0,12,15],[A12,A12/SQ3,3,30],[2*A12,2*A12/SQ3,3,90]], theta:60 },
+  { code:"4.6.12", name:"Dodecágonos, hexágonos y cuadrados", T1:[D4612,0], T2:[D4612/2,D4612*H3],
+    polys:[[0,0,12,15],[D4612/2,0,4,45],[D4612/4,D4612*SQ3/4,4,105],[-D4612/4,D4612*SQ3/4,4,165],
+           [D4612/2,D4612/(2*SQ3),6,0],[D4612,D4612/SQ3,6,0]], theta:60 },
+  { code:"3.4.6.4", name:"Hexágonos, cuadrados y triángulos", T1:[D3464,0], T2:[D3464/2,D3464*H3],
+    polys:[[0,0,6,30],[D3464/2,0,4,45],[D3464/4,D3464*SQ3/4,4,105],[-D3464/4,D3464*SQ3/4,4,165],
+           [D3464/2,D3464/(2*SQ3),3,90],[D3464,D3464/SQ3,3,30]], theta:60 },
+  { code:"3.6.3.6", name:"Hexágonos y triángulos", T1:[2,0], T2:[1,SQ3],
+    polys:[[0,0,6,0],[1,1/SQ3,3,30],[0,2/SQ3,3,90]], theta:60 },
+  { code:"3.3.3.4.4", name:"Cuadrados y triángulos en franjas", T1:[1,0], T2:[0.5,1+H3],
+    polys:[[0.5,0.5,4,45],[0.5,1+H3/3,3,90],[1,1+2*H3/3,3,30]], theta:60 },
+  { code:"6.6.6", name:"Hexágonos", T1:[SQ3,0], T2:[SQ3/2,1.5],
+    polys:[[0,0,6,30]], theta:60 },
+  { code:"4.4.4.4", name:"Cuadrados", T1:[1,0], T2:[0,1],
+    polys:[[0,0,4,45]], theta:67.5 },
+  { code:"3.3.3.3.3.3", name:"Triángulos", T1:[1,0], T2:[0.5,H3],
+    polys:[[0.5,H3/3,3,90],[1,2*H3/3,3,30]], theta:60 },
+  { code:"3.3.4.3.4", name:"Cuadrado achatado", T1:[ASN,0], T2:[0,ASN],
+    polys:[[0,0,4,30],[ASN/2,ASN/2,4,60], ...[75,165,255,345].map(d => [RSN*Math.cos(d*RAD), RSN*Math.sin(d*RAD), 3, d])], theta:60 },
+  { code:"3.3.3.3.6", name:"Hexágono achatado", T1:[2.5,H3], T2:[0.5,1.5*SQ3],
+    polys:[[0,0,6,0], ...[30,90,150,210,270,330].map(d => [RHT*Math.cos(d*RAD), RHT*Math.sin(d*RAD), 3, d]),
+           [1,2/SQ3,3,90],[-0.5,2.5/SQ3,3,150]], theta:60 },
+].map(b => ({ ...b, group: "Arquimedianas" }));
+
+/* Tramas derivadas: se subdividen algunos polígonos en otros regulares
+   (dodecágono = hexágono + 6 cuadrados + 6 triángulos; hexágono = 6 triángulos),
+   a veces sobre una supercelda para dividir solo una parte. Salen teselaciones 2- y 3-uniformes. */
+function dissectPoly([cx, cy, n, r]) {
+  const at = (d, dist) => [cx + dist * Math.cos(d * RAD), cy + dist * Math.sin(d * RAD)];
+  const out = [];
+  if (n === 12) {
+    out.push([cx, cy, 6, r + 15]);
+    for (let k = 0; k < 6; k++) { const f = r - 15 + 60 * k; out.push([...at(f, H3 + 0.5), 4, 45 + f]); }
+    for (let k = 0; k < 6; k++) { const f = r + 15 + 60 * k; out.push([...at(f, A12 - SQ3 / 6), 3, f + 180]); }
+  } else if (n === 6) {
+    for (let k = 0; k < 6; k++) { const f = r + 30 + 60 * k; out.push([...at(f, 1 / SQ3), 3, f + 180]); }
+  } else out.push([cx, cy, n, r]);
+  return out;
+}
+function derive(src, name, { sup = [[1, 0], [0, 1]], reps = [[0, 0]], cut }) {
+  const b = BASES.find(x => x.code === src);
+  const T1 = [sup[0][0] * b.T1[0] + sup[0][1] * b.T2[0], sup[0][0] * b.T1[1] + sup[0][1] * b.T2[1]];
+  const T2 = [sup[1][0] * b.T1[0] + sup[1][1] * b.T2[0], sup[1][0] * b.T1[1] + sup[1][1] * b.T2[1]];
+  const polys = [];
+  reps.forEach(([i, j], ri) => b.polys.forEach(p => {
+    const q = [p[0] + i * b.T1[0] + j * b.T2[0], p[1] + i * b.T1[1] + j * b.T2[1], p[2], p[3]];
+    if (cut(q[2], ri)) polys.push(...dissectPoly(q)); else polys.push(q);
+  }));
+  return { code: name.code, name: name.name, T1, T2, polys, theta: name.theta || 60, group: "Derivadas" };
+}
+const SQRT3_SUP = { sup: [[1, 1], [-1, 2]], reps: [[0, 0], [1, 0], [2, 0]] };
+BASES.push(
+  derive("3.12.12", { code:"3.12.12 · ½", name:"Dodecágonos y rosetones de hexágono" }, { sup:[[2,0],[0,1]], reps:[[0,0],[1,0]], cut:(n,ri) => n === 12 && ri === 1 }),
+  derive("4.6.12",  { code:"4.6.12 · ½", name:"Dodecágonos alternos divididos" }, { sup:[[2,0],[0,1]], reps:[[0,0],[1,0]], cut:(n,ri) => n === 12 && ri === 1 }),
+  derive("3.12.12", { code:"3.4.6.4 + 3.3.4.3.4", name:"Dodecágonos divididos" }, { cut:n => n === 12 }),
+  derive("4.6.12",  { code:"4.6.12 · 12→", name:"Hexágonos, cuadrados y triángulos (2)" }, { cut:n => n === 12 }),
+  derive("4.6.12",  { code:"4.6.12 · 6→", name:"Dodecágonos entre triángulos" }, { cut:n => n === 6 }),
+  derive("3.4.6.4", { code:"3.4.6.4 · ⅓", name:"Hexágonos y estrellas de triángulos" }, { ...SQRT3_SUP, cut:(n,ri) => n === 6 && ri === 0 }),
+  derive("6.6.6",   { code:"3⁶ + 3².6²", name:"Hexágonos y triángulos (⅓)" }, { ...SQRT3_SUP, cut:(n,ri) => ri === 0 }),
+  derive("6.6.6",   { code:"3⁶ + 3.6.3.6", name:"Hexágonos aislados (⅔)" }, { ...SQRT3_SUP, cut:(n,ri) => ri !== 0 }),
+  derive("3.6.3.6", { code:"3.6.3.6 · ½", name:"Hexágonos en filas alternas" }, { sup:[[2,0],[0,1]], reps:[[0,0],[1,0]], cut:(n,ri) => n === 6 && ri === 1 }),
+);
+
+function regVerts(cx, cy, n, rot) {
+  const R = 1 / (2 * Math.sin(Math.PI / n)), v = [];
+  for (let k = 0; k < n; k++) { const a = (rot + 360 * k / n) * RAD; v.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); }
+  return v;
+}
+function lineX(p, d, q, e) { // p + t d = q + s e
+  const den = d[0] * e[1] - d[1] * e[0];
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((q[0] - p[0]) * e[1] - (q[1] - p[1]) * e[0]) / den;
+  const s = ((q[0] - p[0]) * d[1] - (q[1] - p[1]) * d[0]) / den;
+  return { t, s, P: [p[0] + t * d[0], p[1] + t * d[1]] };
+}
+const key = (x, y) => Math.round(x * 1e4) + "," + Math.round(y * 1e4);
+function polyArea(v) { let s = 0; for (let i = 0; i < v.length; i++) { const a = v[i], b = v[(i + 1) % v.length]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; }
+function centroid(v) {
+  let a = 0, x = 0, y = 0;
+  for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length], c = p[0] * q[1] - q[0] * p[1]; a += c; x += (p[0] + q[0]) * c; y += (p[1] + q[1]) * c; }
+  return [x / (3 * a), y / (3 * a)];
+}
+function inPoly(p, v) {
+  let c = false;
+  for (let i = 0, j = v.length - 1; i < v.length; j = i++)
+    if ((v[i][1] > p[1]) !== (v[j][1] > p[1]) && p[0] < (v[j][0] - v[i][0]) * (p[1] - v[i][1]) / (v[j][1] - v[i][1]) + v[i][0]) c = !c;
+  return c;
+}
+function isConvex(v) {
+  for (let i = 0; i < v.length; i++) { const a = v[i], b = v[(i + 1) % v.length], c = v[(i + 2) % v.length];
+    if ((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) < -1e-9) return false; }
+  return true;
+}
+
+/* Polígonos de una trama: [cx, cy, n, giro] si es regular, o { pts, kid } si no lo es.
+   kid identifica el tipo de pieza (número de lados para los regulares). */
+const polyVerts = p => Array.isArray(p) ? regVerts(...p) : p.pts;
+const polyKid = p => Array.isArray(p) ? p[2] : p.kid;
+const KID_LABEL = { bow: "Pajarita", gap4: "Estrella de 4 puntas", gap8: "Estrella de 8 puntas", thick: "Rombo ancho", thin: "Rombo estrecho" };
+const kidName = k => typeof k === "number" ? ({ 3: "Triángulo", 4: "Cuadrado", 6: "Hexágono", 8: "Octógono", 10: "Decágono", 12: "Dodecágono", 16: "Hexadecágono" }[k] || k + " lados") : KID_LABEL[k] || k;
+const KID_SHORT = { bow: "pajarita", gap4: "estrella de 4 puntas", gap8: "estrella de 8 puntas", thick: "ancho", thin: "estrecho" };
+const edgeLabel = id => "Rombo " + id.slice(1).split("|").map(k => KID_SHORT[k] || k).join(" | ");
+const kidOrder = (a, b) => (typeof a === "number" && typeof b === "number") ? a - b : String(a).localeCompare(String(b));
+
+function translatedPolys(base, range) {
+  if (base.patch) return base.polys.map(p => ({ p, ox: 0, oy: 0 }));
+  const out = [];
+  for (let i = -range; i <= range; i++) for (let j = -range; j <= range; j++)
+    for (const p of base.polys) out.push({ p, ox: i * base.T1[0] + j * base.T2[0], oy: i * base.T1[1] + j * base.T2[1] });
+  return out;
+}
+// Vecino de cada lado (tipo del polígono contiguo), indexado por el punto medio del lado
+function neighbourMap(base) {
+  if (base._nmap) return base._nmap;
+  const map = new Map();
+  for (const { p, ox, oy } of translatedPolys(base, 2)) {
+    const v = polyVerts(p), n = v.length, kid = polyKid(p);
+    for (let k = 0; k < n; k++) { const a = v[k], b = v[(k + 1) % n];
+      const kk = key((a[0] + b[0]) / 2 + ox, (a[1] + b[1]) / 2 + oy); (map.get(kk) || map.set(kk, []).get(kk)).push(kid); }
+  }
+  return (base._nmap = map);
+}
+
+// Geometría del lazo (método de Hankin) para cada polígono de la celda.
+// o.theta: ángulo de contacto en grados, o una función tipo -> grados (ángulo por tipo de polígono)
+// o.delta: separación en el borde; o.rosette: 0 = estrellas simples, >0 = rosetas con ese radio relativo
+function buildGeom(base, o) {
+  const delta = o.delta || 0, ros = o.rosette || 0;
+  const thOf = typeof o.theta === "function" ? o.theta : () => o.theta;
+  const nmap = neighbourMap(base);
+  let ok = true;
+  // las piezas congruentes y con los mismos vecinos se calculan una vez y se trasladan (clave en Penrose)
+  const cache = new Map();
+  const protos = base.polys.map(p => {
+    const V = polyVerts(p), kid = polyKid(p);
+    let ck = null;
+    if (base.patch) {
+      const nb = V.map((A, k) => { const B = V[(k + 1) % V.length]; return delta > 0 ? (nmap.get(key((A[0] + B[0]) / 2, (A[1] + B[1]) / 2)) || []).slice().sort().join(",") : ""; });
+      ck = kid + "|" + V.map(v => Math.round((v[0] - V[0][0]) * 1e3) + "," + Math.round((v[1] - V[0][1]) * 1e3)).join(";") + "|" + nb.join("/");
+      const hit = cache.get(ck);
+      if (hit) return shiftGeom(hit.g, V[0][0] - hit.x, V[0][1] - hit.y);
+    }
+    const C = Array.isArray(p) ? [p[0], p[1]] : centroid(V);
+    let thDeg = thOf(kid), g = null;
+    if (!Array.isArray(p) && !isConvex(V)) g = hankinGeneral(V, C, kid, thDeg, delta, nmap);
+    else for (let tries = 0; tries < 4 && !g; tries++, thDeg += 0.05) g = hankinPoly(V, C, kid, thDeg, delta, nmap);
+    // en polígonos no regulares (rombos estrechos de Penrose) las rectas pueden cruzarse antes de encontrarse:
+    // entonces se emparejan por cercanía, como en los polígonos cóncavos
+    if (!Array.isArray(p) && !g.ok) g = hankinGeneral(V, C, kid, thOf(kid), delta, nmap);
+    if (!g.ok) ok = false;
+    if (ros > 0 && Array.isArray(p) && p[2] >= 6) addRosette(g, ros);
+    if (ck) cache.set(ck, { g, x: V[0][0], y: V[0][1] });
+    return g;
+  });
+  return { ok, protos };
+}
+
+function shiftGeom(g, dx, dy) {
+  const sh = P => [P[0] + dx, P[1] + dy];
+  return { ...g, cx: g.cx + dx, cy: g.cy + dy, V: g.V.map(sh),
+    faces: g.faces.map(f => ({ pts: f.pts.map(sh), fam: f.fam })),
+    segs: g.segs.map(([a, b]) => [sh(a), sh(b)]),
+    cross: g.cross.map(x => ({ ...x, c: sh(x.c) })) };
+}
+function edgeData(V, kid, th, delta, nmap) {
+  const ct = Math.cos(th), st = Math.sin(th), n = V.length, E = [];
+  for (let k = 0; k < n; k++) {
+    const A = V[k], B = V[(k + 1) % n];
+    const u = [B[0] - A[0], B[1] - A[1]]; const len = Math.hypot(u[0], u[1]); u[0] /= len; u[1] /= len;
+    const nr = [-u[1], u[0]];
+    const m = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    const pa = [m[0] + delta * u[0], m[1] + delta * u[1]];
+    const pb = [m[0] - delta * u[0], m[1] - delta * u[1]];
+    const d1 = [ct * u[0] + st * nr[0], ct * u[1] + st * nr[1]];   // hacia B
+    const d2 = [-ct * u[0] + st * nr[0], -ct * u[1] + st * nr[1]]; // hacia A
+    const c = [m[0] + delta * Math.tan(th) * nr[0], m[1] + delta * Math.tan(th) * nr[1]];
+    const nbs = nmap.get(key(m[0], m[1])) || [kid, kid];
+    const other = nbs.length === 2 ? (nbs[0] === kid ? nbs[1] : nbs[0]) : kid;
+    E.push({ A, B, u, nr, m, pa, pb, d1, d2, c, nb: other });
+  }
+  return E;
+}
+const edgeFam = (kid, nb) => "e" + [kid, nb].sort(kidOrder).join("|");
+
+// Polígonos convexos: cada recta se encuentra con la del lado vecino que apunta al mismo vértice
+function hankinPoly(V, C, kid, thDeg, delta, nmap) {
+  const th = thDeg * RAD, ct = Math.cos(th), n = V.length, [cx, cy] = C;
+  const E = edgeData(V, kid, th, delta, nmap);
+  let ok = true;
+  const X = [];
+  for (let k = 0; k < n; k++) {
+    const e0 = E[k], e1 = E[(k + 1) % n];
+    const r1 = lineX(e0.pb, e0.d1, e1.pa, e1.d2);
+    if (!r1) return null; // rectas superpuestas: caso límite, se resuelve por continuidad
+    const Vt = e0.B;
+    const toV = [Vt[0] - cx, Vt[1] - cy], toX = [r1.P[0] - cx, r1.P[1] - cy];
+    if (r1.t <= delta / ct + 1e-6 || r1.s <= delta / ct + 1e-6 || toV[0] * toX[0] + toV[1] * toX[1] < -1e-6) ok = false;
+    X.push(r1.P);
+  }
+  const central = [];
+  for (let k = 0; k < n; k++) central.push(E[k].c, X[k]);
+  const segs = [], cross = [];
+  for (let k = 0; k < n; k++) {
+    const e = E[k], Xprev = X[(k - 1 + n) % n];
+    segs.push([e.c, X[k]], [e.c, Xprev]);
+    if (delta > 0) segs.push([e.pb, e.c], [e.pa, e.c]);
+    const fwd = Math.hypot(X[k][0] - e.c[0], X[k][1] - e.c[1]);
+    cross.push({ c: e.c, d: e.d1, fwd, back: delta > 0 ? delta / ct : 0 });
+  }
+  const faces = [{ pts: central, fam: "p" + kid }];
+  if (delta > 0) for (const e of E) faces.push({ pts: [e.pb, e.pa, e.c], fam: edgeFam(kid, e.nb) });
+  return { n, kid, cx, cy, V, E, X, faces, segs, cross, ok, theta: thDeg };
+}
+
+/* Polígonos cóncavos (pajarita del girih, huecos entre hexadecágonos): cada rayo se empareja con el
+   rayo más cercano que corte dentro del polígono, y las piezas se obtienen recorriendo el grafo plano. */
+function hankinGeneral(V, C, kid, thDeg, delta, nmap) {
+  const th = thDeg * RAD, ct = Math.cos(th), n = V.length;
+  const E = edgeData(V, kid, th, delta, nmap);
+  const rays = [];
+  E.forEach((e, k) => { rays.push({ k, p: e.c, d: e.d1 }, { k, p: e.c, d: e.d2 }); });
+  const onBoundary = P => { for (let i = 0; i < n; i++) { const a = V[i], b = V[(i + 1) % n];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]), cr = ((b[0] - a[0]) * (P[1] - a[1]) - (b[1] - a[1]) * (P[0] - a[0])) / L;
+    const dt = ((P[0] - a[0]) * (b[0] - a[0]) + (P[1] - a[1]) * (b[1] - a[1])) / (L * L);
+    if (Math.abs(cr) < 1e-6 && dt > -1e-6 && dt < 1 + 1e-6) return true; } return false; };
+  const segInside = (a, b) => {
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    if (!inPoly(mid, V) && !onBoundary(mid)) return false;
+    for (let i = 0; i < n; i++) { const r = lineX(a, [b[0] - a[0], b[1] - a[1]], V[i], [V[(i + 1) % n][0] - V[i][0], V[(i + 1) % n][1] - V[i][1]]);
+      if (r && r.t > 1e-6 && r.t < 1 - 1e-6 && r.s > 1e-6 && r.s < 1 - 1e-6) return false; }
+    return true;
+  };
+  const cand = [];
+  for (let i = 0; i < rays.length; i++) for (let j = i + 1; j < rays.length; j++) {
+    const a = rays[i], b = rays[j]; if (a.k === b.k) continue;
+    const r = lineX(a.p, a.d, b.p, b.d); if (!r || r.t <= 1e-6 || r.s <= 1e-6) continue;
+    if (!(inPoly(r.P, V) || onBoundary(r.P))) continue;
+    if (!segInside(a.p, r.P) || !segInside(b.p, r.P)) continue;
+    cand.push({ i, j, t: r.t, s: r.s, P: r.P });
+  }
+  cand.sort((x, y) => Math.max(x.t, x.s) - Math.max(y.t, y.s));
+  const used = new Set(), segs = [], reach = new Map();
+  for (const c of cand) {
+    if (used.has(c.i) || used.has(c.j)) continue;
+    used.add(c.i); used.add(c.j);
+    segs.push([rays[c.i].p, c.P], [rays[c.j].p, c.P]);
+    reach.set(c.i, c.t); reach.set(c.j, c.s);
+  }
+  if (delta > 0) for (const e of E) segs.push([e.pb, e.c], [e.pa, e.c]);
+  const cross = E.map((e, k) => ({ c: e.c, d: e.d1, fwd: reach.get(2 * k) ?? 0.4, back: delta > 0 ? delta / ct : 0 }));
+  const faces = planarFaces(V, E, segs, delta).map(f => ({ pts: f.pts, fam: classifyFace(f, kid, E, delta) }));
+  return { n, kid, cx: C[0], cy: C[1], V, E, faces, segs, cross, ok: true, theta: thDeg, general: true };
+}
+
+// Recorre el grafo plano formado por el contorno del polígono y los segmentos del lazo
+function planarFaces(V, E, segs, delta) {
+  const nodes = [], idx = new Map();
+  const node = P => { const k = key(P[0], P[1]); if (!idx.has(k)) { idx.set(k, nodes.length); nodes.push({ P, adj: new Set(), vtx: false }); } return idx.get(k); };
+  V.forEach(P => nodes[node(P)].vtx = true);
+  let lines = [];
+  V.forEach((A, k) => {
+    const e = E[k], B = V[(k + 1) % V.length];
+    const pts = delta > 0 ? [A, e.pb, e.pa, B] : [A, e.m, B];
+    for (let i = 0; i + 1 < pts.length; i++) lines.push([pts[i], pts[i + 1], true]);
+  });
+  for (const [a, b] of segs) if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 1e-7) lines.push([a, b, false]);
+  // partir los segmentos en sus cruces
+  const cuts = lines.map(() => [0, 1]);
+  for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) {
+    const [a, b] = lines[i], [c, d] = lines[j];
+    const r = lineX(a, [b[0] - a[0], b[1] - a[1]], c, [d[0] - c[0], d[1] - c[1]]);
+    if (!r) continue;
+    if (r.t > 1e-7 && r.t < 1 - 1e-7 && r.s > -1e-7 && r.s < 1 + 1e-7) cuts[i].push(r.t);
+    if (r.s > 1e-7 && r.s < 1 - 1e-7 && r.t > -1e-7 && r.t < 1 + 1e-7) cuts[j].push(r.s);
+  }
+  lines.forEach(([a, b], i) => {
+    const ts = [...new Set(cuts[i].map(t => Math.round(t * 1e9) / 1e9))].sort((x, y) => x - y);
+    for (let q = 0; q + 1 < ts.length; q++) {
+      const P = [a[0] + ts[q] * (b[0] - a[0]), a[1] + ts[q] * (b[1] - a[1])], Q = [a[0] + ts[q + 1] * (b[0] - a[0]), a[1] + ts[q + 1] * (b[1] - a[1])];
+      const u = node(P), v = node(Q); if (u !== v) { nodes[u].adj.add(v); nodes[v].adj.add(u); }
+    }
+  });
+  const ang = (u, v) => Math.atan2(nodes[v].P[1] - nodes[u].P[1], nodes[v].P[0] - nodes[u].P[0]);
+  const sorted = nodes.map((nd, u) => [...nd.adj].sort((a, b) => ang(u, a) - ang(u, b)));
+  const seen = new Set(), faces = [];
+  for (let u = 0; u < nodes.length; u++) for (const v of sorted[u]) {
+    if (seen.has(u + ">" + v)) continue;
+    const loop = []; let a = u, b = v, guard = 0;
+    while (!seen.has(a + ">" + b) && guard++ < 500) {
+      seen.add(a + ">" + b); loop.push(a);
+      const list = sorted[b], i = list.indexOf(a);
+      const c = list[(i - 1 + list.length) % list.length];
+      a = b; b = c;
+    }
+    const pts = loop.map(i => nodes[i].P);
+    if (pts.length >= 3 && polyArea(pts) > 1e-7) faces.push({ pts, vtx: loop.some(i => nodes[i].vtx), area: polyArea(pts) });
+  }
+  return faces;
+}
+function classifyFace(f, kid, E, delta) {
+  if (f.vtx) return "v";
+  if (delta > 0) for (const e of E) {
+    const near = P => f.pts.some(q => Math.hypot(q[0] - P[0], q[1] - P[1]) < 1e-6);
+    if (near(e.pa) && near(e.pb)) return edgeFam(kid, e.nb);
+  }
+  return "q" + kid + ":" + f.pts.length + ":" + Math.round(f.area * 200);
+}
+
+// Roseta: la estrella central se divide en una estrella interior y un anillo de pétalos hexagonales
+function addRosette(g, s) {
+  const { n, cx, cy, E, X } = g;
+  const Xi = X.map(p => [cx + s * (p[0] - cx), cy + s * (p[1] - cy)]);
+  // la estrella interior repite la proporción de la exterior girada media punta: |Z| / |X'| = |X| / |c|
+  const Z = [];
+  for (let k = 0; k < n; k++) {
+    const ck = E[k].c, rc = Math.hypot(ck[0] - cx, ck[1] - cy), rX = Math.hypot(X[k][0] - cx, X[k][1] - cy);
+    if (rX >= rc * 0.97) return; // la estrella exterior no deja sitio para pétalos
+    const rz = s * rX * rX / rc;
+    Z.push([cx + (ck[0] - cx) / rc * rz, cy + (ck[1] - cy) / rc * rz]);
+  }
+  const inner = [], petals = [];
+  for (let k = 0; k < n; k++) {
+    const kp = (k - 1 + n) % n;
+    inner.push(Z[k], Xi[k]);
+    petals.push({ pts: [X[kp], E[k].c, X[k], Xi[k], Z[k], Xi[kp]], fam: "r" + g.kid });
+    g.segs.push([X[k], Xi[k]], [Xi[k], Z[k]], [Z[k], Xi[kp]]);
+  }
+  g.faces = [{ pts: inner, fam: "p" + g.kid }, ...petals, ...g.faces.filter(f => f.fam[0] === "e")];
+  g.rosette = true;
+}
+
+/* ---------- Tramas con polígonos no regulares ---------- */
+// Hueco cóncavo entre polígonos: los vértices cercanos a un punto, ordenados por ángulo
+function gapPolygon(polys, T1, T2, center, radius) {
+  const pts = [];
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) for (const p of polys) {
+    for (const v of polyVerts(p)) { const q = [v[0] + i * T1[0] + j * T2[0], v[1] + i * T1[1] + j * T2[1]];
+      if (Math.hypot(q[0] - center[0], q[1] - center[1]) < radius && !pts.some(r => Math.hypot(r[0] - q[0], r[1] - q[1]) < 1e-6)) pts.push(q); }
+  }
+  return pts.sort((a, b) => Math.atan2(a[1] - center[1], a[0] - center[0]) - Math.atan2(b[1] - center[1], b[0] - center[0]));
+}
+const A10 = 1 / (2 * Math.tan(Math.PI / 10)), A16 = 1 / (2 * Math.tan(Math.PI / 16));
+function girihBase() {
+  const T1 = [2 * A10, 0], T2 = [2 * A10 * Math.cos(72 * RAD), 2 * A10 * Math.sin(72 * RAD)];
+  const polys = [[0, 0, 10, 18]];
+  polys.push({ pts: gapPolygon(polys, T1, T2, [(T1[0] + T2[0]) / 2, (T1[1] + T2[1]) / 2], 1.2), kid: "bow" });
+  return { code: "Girih 10", name: "Decágonos y pajaritas (girih)", T1, T2, polys, theta: 54 };
+}
+function sixteenBase(withSquares) {
+  const D = withSquares ? 2 * A16 + 1 : 2 * A16, T1 = [D, 0], T2 = [0, D];
+  const polys = [[0, 0, 16, 11.25]];
+  if (withSquares) polys.push([D / 2, 0, 4, 45], [0, D / 2, 4, 45]);
+  polys.push({ pts: gapPolygon(polys, T1, T2, [D / 2, D / 2], withSquares ? 2.7 : 2.2), kid: withSquares ? "gap8" : "gap4" });
+  return withSquares
+    ? { code: "16 + 4", name: "Hexadecágonos, cuadrados y estrellas de 8", T1, T2, polys, theta: 67.5 }
+    : { code: "16.16", name: "Hexadecágonos y estrellas de 4", T1, T2, polys, theta: 67.5 };
+}
+
+// Rombos de Penrose (P3) por subdivisión de triángulos de Robinson; trama finita, no periódica
+function penroseBase(depth = 8) {
+  const PHI = (1 + Math.sqrt(5)) / 2;
+  let tris = [];
+  for (let i = 0; i < 10; i++) {
+    let B = [Math.cos((2 * i - 1) * Math.PI / 10), Math.sin((2 * i - 1) * Math.PI / 10)];
+    let C = [Math.cos((2 * i + 1) * Math.PI / 10), Math.sin((2 * i + 1) * Math.PI / 10)];
+    if (i % 2 === 0) [B, C] = [C, B];
+    tris.push([0, [0, 0], B, C]);
+  }
+  const lerp = (P, Q, t) => [P[0] + (Q[0] - P[0]) * t, P[1] + (Q[1] - P[1]) * t];
+  for (let d = 0; d < depth; d++) {
+    const out = [];
+    for (const [c, A, B, C] of tris) {
+      if (c === 0) { const P = lerp(A, B, 1 / PHI); out.push([0, C, P, B], [1, P, C, A]); }
+      else { const Q = lerp(B, A, 1 / PHI), R = lerp(B, C, 1 / PHI); out.push([1, R, C, A], [1, Q, R, B], [0, R, Q, A]); }
+    }
+    tris = out;
+  }
+  const scale = Math.pow(PHI, depth);
+  const pairs = new Map();
+  for (const t of tris) { const k = [key(...t[2]), key(...t[3])].sort().join("/"); (pairs.get(k) || pairs.set(k, []).get(k)).push(t); }
+  const polys = [];
+  for (const list of pairs.values()) {
+    if (list.length !== 2) continue; // rombos incompletos en el borde del parche
+    const [[c, A, B, C], [, A2]] = list;
+    let pts = [A, B, A2, C].map(p => [p[0] * scale, p[1] * scale]);
+    if (polyArea(pts) < 0) pts = pts.reverse();
+    polys.push({ pts, kid: Math.abs(polyArea(pts)) < 0.8 ? "thin" : "thick" });
+  }
+  return { code: "Penrose", name: "Rombos de Penrose (no periódica)", patch: true, polys, theta: 54 };
+}
+
+BASES.push(...[girihBase(), sixteenBase(false), sixteenBase(true), penroseBase()].map(b => ({ ...b, group: "Girih y no periódicas" })));
+// GEO-END
+
+/* ---------- Paletas ---------- */
+const PALETTES = [
+  { id:"nazari",   name:"Nazarí",     colors:["#F2EADB","#1E5B4F","#1F3E73","#C9922E","#1B1B1B","#8E2C22"], line:"#15120F", band:"#F6F0E3" },
+  { id:"comares",  name:"Comares",    colors:["#E7E0CD","#2D6A4F","#264E86","#D4A017","#2B2B2B","#6B8F9E"], line:"#1C1A17", band:"#F0EADB" },
+  { id:"zellige",  name:"Zellige",    colors:["#0F5257","#E7DFC6","#C2452D","#1B365D","#E0B04B","#2E2E2E"], line:"#121212", band:"#F1EBD8" },
+  { id:"iznik",    name:"Iznik",      colors:["#FBFBF8","#1C4E9A","#2FA4A9","#C0392B","#2E7D4F","#0E2A55"], line:"#0E2A55", band:"#FFFFFF" },
+  { id:"generalife", name:"Generalife", colors:["#E6E9D8","#3E6B48","#8DB580","#C9B26B","#24412E","#A5C4A0"], line:"#1A2A1E", band:"#F2F1E6" },
+  { id:"estuco",   name:"Yesería",    colors:["#EDE3CF","#C9B79A","#A23B2C","#2D4E7E","#D9C9A8","#5E4B3C"], line:"#3E3125", band:"#F5EEE1" },
+  { id:"noche",    name:"Nocturno",   colors:["#0E1A2B","#1F3A5F","#C9A227","#3C6E71","#0A0F18","#7A8FA6"], line:"#05080D", band:"#E9D9A6" },
+  { id:"mono",     name:"Monocromo",  colors:["#F4F2EC","#1A1A1A","#8A8A8A","#D0CEC6","#3A3A3A","#B0AEA6"], line:"#111111", band:"#F4F2EC" },
+  { id:"custom",   name:"Propia",     colors:["#F1E9D8","#7B2D26","#1D5C63","#E0A43B","#22223B","#9A8C98"], line:"#151515", band:"#FAF5EA" },
+];
+
+const S = {
+  base: 1, mode: "mosaic", palette: "nazari", theta: 60, delta: 0,
+  size: 62, band: 8, lw: 1.25, showBase: false, colorSeed: 5, off: { x: 0, y: 0 },
+  rosette: true, rosSize: 0.6, varAngles: false, angleSeed: 5,
+};
+try {
+  const saved = JSON.parse(localStorage.getItem("alhambra") || "null");
+  if (saved) { Object.assign(S, saved, { off: { x: 0, y: 0 } }); if (saved.customPal) Object.assign(PALETTES.at(-1), saved.customPal); }
+} catch {}
+if (!(S.base >= 0 && S.base < BASES.length)) S.base = 0;
+const persist = () => { try { localStorage.setItem("alhambra", JSON.stringify({ ...S, off: undefined, customPal: PALETTES.at(-1) })); } catch {} };
+
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const newSeed = () => (Math.random() * 2 ** 31) | 0;
+const palette = () => PALETTES.find(p => p.id === S.palette) || PALETTES[0];
+
+/* ---------- Familias de piezas y asignación de color ---------- */
+function families(geom) {
+  const fam = new Map(); // id -> {label, adj:Set}
+  const add = (id, label) => fam.get(id) || fam.set(id, { id, label, adj: new Set() }).get(id);
+  const link = (a, b) => { if (a !== b) { fam.get(a).adj.add(b); fam.get(b).adj.add(a); } };
+  add("v", "Roseta de vértice");
+  for (const p of geom.protos) {
+    const k = p.kid, pid = "p" + k, rid = "r" + k;
+    if (p.general) {
+      // piezas de polígonos cóncavos: se agrupan por forma y se enlazan con todo lo que hay en el polígono
+      const ids = [...new Set(p.faces.map(f => f.fam))];
+      let q = 0;
+      for (const id of ids) {
+        if (id === "v") continue;
+        if (id[0] === "e") add(id, edgeLabel(id));
+        else if (!fam.has(id)) add(id, `${kidName(k)} · pieza ${String.fromCharCode(65 + q++)}`);
+        else q++;
+      }
+      for (const a of ids) for (const b of ids) link(a, b);
+      continue;
+    }
+    add(pid, p.rosette ? "Estrella interior de " + p.n : starName(p));
+    if (p.rosette) { add(rid, "Pétalo de " + p.n); link(pid, rid); link(rid, "v"); }
+    else link(pid, "v");
+    for (const f of p.faces) if (f.fam[0] === "e") {
+      add(f.fam, edgeLabel(f.fam));
+      link(f.fam, "v"); link(f.fam, p.rosette ? rid : pid);
+    }
+  }
+  return fam;
+}
+const starName = p => typeof p.kid === "number" ? "Estrella de " + p.kid : ({ thick: "Pieza del rombo ancho", thin: "Pieza del rombo estrecho" }[p.kid] || "Pieza de " + kidName(p.kid).toLowerCase());
+function assignColors(fam, pal, seed) {
+  const r = rng(seed), ids = [...fam.keys()], nc = pal.colors.length;
+  let best = null, bestBad = Infinity;
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const a = {}; const perm = [...Array(nc).keys()].sort(() => r() - 0.5);
+    ids.forEach((id, i) => a[id] = perm[i % nc]);
+    if (attempt > 0) ids.forEach(id => { if (r() < 0.35) a[id] = Math.floor(r() * nc); });
+    let bad = 0; for (const id of ids) for (const o of fam.get(id).adj) if (a[id] === a[o]) bad++;
+    if (bad < bestBad) { best = a; bestBad = bad; if (!bad) break; }
+  }
+  const out = {}; for (const id of ids) out[id] = pal.colors[best[id]]; return out;
+}
+
+/* ---------- Dibujo con dos destinos: canvas y SVG ---------- */
+function makeCanvasPen(ctx) {
+  return {
+    bg(col, W, H) { ctx.fillStyle = col; ctx.fillRect(0, 0, W, H); },
+    fills(groups) { // Map color -> array of polygons
+      for (const [col, polys] of groups) {
+        const p = new Path2D();
+        for (const pts of polys) { pts.forEach((q, i) => i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1])); p.closePath(); }
+        ctx.fillStyle = col; ctx.fill(p);
+        ctx.strokeStyle = col; ctx.lineWidth = 0.6; ctx.lineJoin = "round"; ctx.stroke(p); // tapa costuras
+      }
+    },
+    lines(segs, col, w, cap) {
+      if (w <= 0) return;
+      const p = new Path2D(); for (const [a, b] of segs) { p.moveTo(a[0], a[1]); p.lineTo(b[0], b[1]); }
+      ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = cap; ctx.lineJoin = "round"; ctx.stroke(p);
+    },
+    dashed(segs, col, w) { ctx.save(); ctx.setLineDash([5, 4]); this.lines(segs, col, w, "butt"); ctx.restore(); },
+  };
+}
+function makeSvgPen() {
+  const out = []; const f = v => +v.toFixed(2);
+  return {
+    out,
+    bg(col, W, H) { out.push(`<rect width="${f(W)}" height="${f(H)}" fill="${col}"/>`); },
+    fills(groups) { for (const [col, polys] of groups) out.push(`<path fill="${col}" stroke="${col}" stroke-width="0.6" stroke-linejoin="round" d="${polys.map(pts => "M" + pts.map(q => f(q[0]) + " " + f(q[1])).join("L") + "Z").join("")}"/>`); },
+    lines(segs, col, w, cap) { if (w <= 0) return; out.push(`<path fill="none" stroke="${col}" stroke-width="${f(w)}" stroke-linecap="${cap}" stroke-linejoin="round" d="${segs.map(([a, b]) => `M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}`).join("")}"/>`); },
+    dashed(segs, col, w) { out.push(`<path fill="none" stroke="${col}" stroke-width="${f(w)}" stroke-dasharray="5 4" d="${segs.map(([a, b]) => `M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}`).join("")}"/>`); },
+  };
+}
+
+function drawPattern(pen, W, H, o) {
+  const base = BASES[o.base], { geom, colors, pal } = o;
+  const s = o.size, cxs = W / 2 + o.off.x, cys = H / 2 + o.off.y;
+  const tr = p => [cxs + s * p[0], cys + s * p[1]];
+  // rango de traslaciones que cubre la vista
+  const [a, b] = base.T1 || [1, 0], [c, d] = base.T2 || [0, 1], det = a * d - b * c;
+  const inv = (x, y) => [(d * x - c * y) / det, (-b * x + a * y) / det];
+  const m = 3;
+  const corners = [[-cxs, -cys], [W - cxs, -cys], [-cxs, H - cys], [W - cxs, H - cys]].map(([x, y]) => inv(x / s, y / s));
+  let imin = Math.floor(Math.min(...corners.map(q => q[0]))) - m, imax = Math.ceil(Math.max(...corners.map(q => q[0]))) + m;
+  let jmin = Math.floor(Math.min(...corners.map(q => q[1]))) - m, jmax = Math.ceil(Math.max(...corners.map(q => q[1]))) + m;
+  if (base.patch) imin = imax = jmin = jmax = 0; // trama finita: no se repite
+  const pad = 4 * s;
+  const fills = new Map(), segs = [], crosses = [], baseEdges = [];
+  const push = (col, pts) => (fills.get(col) || fills.set(col, []).get(col)).push(pts);
+  const mode = o.mode;
+  for (let i = imin; i <= imax; i++) for (let j = jmin; j <= jmax; j++) {
+    const ox = i * a + j * c, oy = i * b + j * d;
+    for (const p of geom.protos) {
+      const sx = cxs + s * (p.cx + ox), sy = cys + s * (p.cy + oy);
+      if (sx < -pad || sx > W + pad || sy < -pad || sy > H + pad) continue;
+      const T = q => [cxs + s * (q[0] + ox), cys + s * (q[1] + oy)];
+      if (mode === "base") { push(o.baseColors[p.kid], p.V.map(T)); }
+      else if (mode !== "line") {
+        for (const f of p.faces) push(colors[f.fam], f.pts.map(T));
+      }
+      if (mode === "base" || o.showBase) for (let k = 0; k < p.V.length; k++) baseEdges.push([T(p.V[k]), T(p.V[(k + 1) % p.V.length])]);
+      if (mode !== "base") {
+        for (const [u, v] of p.segs) segs.push([T(u), T(v)]);
+        for (const x of p.cross) crosses.push({ c: T(x.c), d: x.d, fwd: x.fwd * s, back: x.back * s });
+      }
+    }
+  }
+  const bgCol = mode === "base" ? pal.line : mode === "line" ? pal.colors[0] : colors.v;
+  pen.bg(bgCol, W, H);
+  pen.fills(fills);
+  if (mode === "mosaic") pen.lines(segs, pal.line, o.lw, "round");
+  if (mode === "lace" || mode === "line") {
+    const bw = o.band, ow = Math.max(o.lw, 0.5), band = mode === "line" ? pal.colors[1] : pal.band;
+    const outline = mode === "line" ? pal.line : pal.line;
+    pen.lines(segs, outline, bw + 2 * ow, "round");
+    pen.lines(segs, band, bw, "round");
+    // por encima / por debajo: se repinta un tramo corto de la cinta que pasa por encima
+    const h = Math.max(bw * 0.9 + ow, 3);
+    // cada polígono repinta su mitad del cruce; con separación > 0 el cruce queda dentro y se repinta entero
+    const piece = (x, extra) => {
+      const F = Math.min(h, x.fwd * 0.9) + extra, B = x.back > 0 ? Math.min(h, x.back * 0.95) + extra : extra;
+      return [[x.c[0] - B * x.d[0], x.c[1] - B * x.d[1]], [x.c[0] + F * x.d[0], x.c[1] + F * x.d[1]]];
+    };
+    pen.lines(crosses.map(x => piece(x, 0)), outline, bw + 2 * ow, "butt");
+    pen.lines(crosses.map(x => piece(x, 0.6)), band, bw, "butt");
+  }
+  if (mode === "base") pen.lines(baseEdges, pal.band, Math.max(o.lw, 1), "round");
+  else if (o.showBase) pen.dashed(baseEdges, "rgba(220,40,60,0.8)", 1);
+}
+
+/* ---------- Estado de trabajo ---------- */
+const $ = s => document.querySelector(s);
+const view = $("#view"), stage = $("#stage"), ctx = view.getContext("2d");
+let geom, fams, colors, baseColors, W = 0, H = 0;
+
+function thetaSpec(theta) {
+  if (!S.varAngles) return theta;
+  const cache = {};
+  const h = k => typeof k === "number" ? k : [...k].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) % 9973;
+  return k => cache[k] ??= Math.round(Math.min(82, Math.max(32, theta + (rng(S.angleSeed * 31 + h(k))() * 2 - 1) * 14)) * 2) / 2;
+}
+function makeGeom(i, theta, delta) {
+  let d = delta;
+  const spec = thetaSpec(theta), ros = S.rosette ? S.rosSize : 0;
+  let g = buildGeom(BASES[i], { theta: spec, delta: d, rosette: ros });
+  // si la separación es excesiva para este ángulo, se reduce hasta que el lazo sea válido
+  while (!g.ok && d > 0) { d = Math.max(0, d - 0.01); g = buildGeom(BASES[i], { theta: spec, delta: d, rosette: ros }); }
+  g.deltaUsed = d;
+  return g;
+}
+function rebuild() {
+  geom = makeGeom(S.base, S.theta, S.delta / 100);
+  fams = families(geom);
+  colors = assignColors(fams, palette(), S.colorSeed);
+  baseColors = kidColors(geom, palette(), S.colorSeed);
+}
+function kidColors(g, pal, seed) {
+  const kids = [...new Set(g.protos.map(p => p.kid))], r = rng(seed + 17), out = {};
+  const perm = [...pal.colors.keys()].sort(() => r() - 0.5);
+  kids.forEach((k, i) => out[k] = pal.colors[perm[i % perm.length]]);
+  return out;
+}
+function render() {
+  const r = stage.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  const pw = Math.round(W * dpr), ph = Math.round(H * dpr);
+  if (view.width !== pw || view.height !== ph) { view.width = pw; view.height = ph; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawPattern(makeCanvasPen(ctx), W, H, { ...S, geom, colors, baseColors, pal: palette() });
+}
+function updateCard() {
+  const b = BASES[S.base];
+  $("#cCode").textContent = b.code; $("#cName").textContent = b.name;
+  $("#baseOut").textContent = `${S.base + 1} / ${BASES.length}`;
+  $("#baseOut2").textContent = `${S.base + 1} / ${BASES.length}`;
+  $("#baseSel").value = String(S.base);
+  const list = S.mode === "base"
+    ? [...new Set(geom.protos.map(p => p.kid))].map(k => [kidName(k), baseColors[k]])
+    : [...fams.values()].map(f => [f.label, colors[f.id]]);
+  $("#cShapes").innerHTML = list.map(([l, c]) => `<span class="shape"><i style="background:${c}"></i>${l}</span>`).join("");
+  const dTxt = geom.deltaUsed < S.delta / 100 - 1e-9 ? ` (ajustada a ${(geom.deltaUsed * 100).toFixed(0)})` : "";
+  const angs = [...new Map(geom.protos.map(p => [p.kid, p.theta])).entries()].sort((a, b) => kidOrder(b[0], a[0]));
+  const aTxt = S.varAngles ? angs.map(([k, t]) => `${typeof k === "number" ? k : kidName(k).toLowerCase()}: ${(+t).toFixed(1)}°`).join(" · ") : `contacto ${S.theta.toFixed(1)}°`;
+  const rosTxt = S.rosette && !geom.protos.some(p => p.rosette) ? " · sin rosetas posibles aquí" : "";
+  $("#cMeta").textContent = `${list.length} formas · ${aTxt} · separación ${S.delta}${dTxt}${rosTxt}`;
+  document.querySelectorAll(".base").forEach(el => el.setAttribute("aria-pressed", String(+el.dataset.i === S.base)));
+  document.querySelectorAll("#mode button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === S.mode)));
+}
+function refresh() { rebuild(); render(); updateCard(); persist(); }
+new ResizeObserver(() => geom && render()).observe(stage);
+
+/* ---------- Arrastre ---------- */
+let drag = null;
+view.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, ox: S.off.x, oy: S.off.y }; view.setPointerCapture(e.pointerId); view.classList.add("drag"); });
+view.addEventListener("pointermove", e => { if (!drag) return; S.off.x = drag.ox + e.clientX - drag.x; S.off.y = drag.oy + e.clientY - drag.y; requestAnimationFrame(render); });
+const endDrag = () => { drag = null; view.classList.remove("drag"); };
+view.addEventListener("pointerup", endDrag); view.addEventListener("pointercancel", endDrag);
+
+/* ---------- Controles ---------- */
+const sliders = {
+  theta: v => `${(+v).toFixed(1)}°`, delta: v => `${v}`, size: v => `${v} px`,
+  band: v => `${(+v).toFixed(1)} px`, lw: v => `${(+v).toFixed(2)} px`, rosSize: v => `${Math.round(v * 100)}%`,
+};
+const GEOM_SLIDERS = ["theta", "delta", "rosSize"];
+function syncSliders() { for (const id in sliders) { $("#" + id).value = S[id]; $("#" + id + "Out").textContent = sliders[id](S[id]); } }
+for (const id in sliders) {
+  $("#" + id).addEventListener("input", e => {
+    S[id] = +e.target.value; $("#" + id + "Out").textContent = sliders[id](S[id]);
+    if (GEOM_SLIDERS.includes(id)) rebuild();
+    render(); updateCard(); persist();
+  });
+  if (GEOM_SLIDERS.includes(id)) $("#" + id).addEventListener("change", drawThumbs);
+}
+syncSliders();
+for (const id of ["rosette", "varAngles"]) {
+  $("#" + id).checked = S[id];
+  $("#" + id).addEventListener("change", e => { S[id] = e.target.checked; if (id === "varAngles" && S[id]) S.angleSeed = newSeed(); refresh(); drawThumbs(); });
+}
+$("#showBase").checked = S.showBase;
+$("#showBase").addEventListener("change", e => { S.showBase = e.target.checked; render(); persist(); });
+$("#mode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.mode = b.dataset.v; render(); updateCard(); drawThumbs(); persist(); });
+
+function randomizeDesign(keepBase = true) {
+  if (!keepBase) S.base = Math.floor(Math.random() * BASES.length);
+  const t0 = BASES[S.base].theta;
+  S.theta = Math.random() < 0.35 ? t0 : Math.round((36 + Math.random() * 40) * 2) / 2;
+  S.delta = Math.random() < 0.45 ? 0 : Math.round(2 + Math.random() * 14);
+  S.rosette = Math.random() < 0.4; S.rosSize = Math.round((0.45 + Math.random() * 0.35) * 100) / 100;
+  S.varAngles = Math.random() < 0.3; S.angleSeed = newSeed();
+  $("#rosette").checked = S.rosette; $("#varAngles").checked = S.varAngles;
+  S.colorSeed = newSeed(); S.off = { x: 0, y: 0 };
+  syncSliders(); refresh(); drawThumbs();
+}
+$("#regen").addEventListener("click", () => randomizeDesign(true));
+$("#recolor").addEventListener("click", () => { S.colorSeed = newSeed(); refresh(); drawThumbs(); });
+$("#randAll").addEventListener("click", () => {
+  S.palette = PALETTES[Math.floor(Math.random() * (PALETTES.length - 1))].id;
+  S.mode = ["mosaic", "mosaic", "lace", "lace", "line"][Math.floor(Math.random() * 5)];
+  buildPalettes(); randomizeDesign(false);
+});
+$("#center").addEventListener("click", () => { S.off = { x: 0, y: 0 }; render(); });
+const selectBase = i => { S.base = i; S.theta = BASES[i].theta; S.off = { x: 0, y: 0 }; syncSliders(); refresh(); drawThumbs(); };
+
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input,select,textarea")) return;
+  if (e.code === "Space") { e.preventDefault(); randomizeDesign(true); }
+  else if (e.key === "c" || e.key === "C") $("#recolor").click();
+  else if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); selectBase((S.base + (e.key === "ArrowRight" ? 1 : -1) + BASES.length) % BASES.length); }
+});
+
+function buildPalettes() {
+  const box = $("#palettes"); box.innerHTML = "";
+  for (const p of PALETTES) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "swatch";
+    b.setAttribute("aria-pressed", String(p.id === S.palette));
+    b.innerHTML = `<span class="chips">${p.colors.map(c => `<i style="background:${c}"></i>`).join("")}<i style="background:${p.line}"></i></span>${p.name}`;
+    b.addEventListener("click", () => { S.palette = p.id; buildPalettes(); refresh(); drawThumbs(); });
+    box.append(b);
+  }
+  const cust = $("#custom"); cust.classList.toggle("on", S.palette === "custom");
+  if (S.palette === "custom" && !cust.childElementCount) {
+    const cp = PALETTES.at(-1);
+    const fields = [...cp.colors.map((_, i) => ({ lbl: `Color ${i + 1}`, get: () => cp.colors[i], set: v => cp.colors[i] = v })),
+      { lbl: "Línea", get: () => cp.line, set: v => cp.line = v }, { lbl: "Cinta", get: () => cp.band, set: v => cp.band = v }];
+    fields.forEach((f, i) => {
+      const l = document.createElement("label"), inp = document.createElement("input");
+      inp.type = "color"; inp.id = "cc" + i; inp.value = f.get();
+      inp.addEventListener("input", () => { f.set(inp.value); colors = assignColors(fams, palette(), S.colorSeed); render(); updateCard(); persist(); });
+      inp.addEventListener("change", () => { buildPalettes(); drawThumbs(); });
+      l.append(inp, f.lbl); cust.append(l);
+    });
+  }
+}
+buildPalettes();
+
+/* ---------- Catálogo de tramas ---------- */
+const thumbs = [];
+{
+  const groups = [...new Set(BASES.map(b => b.group))];
+  for (const gname of groups) {
+    const idx = BASES.map((b, i) => [b, i]).filter(([b]) => b.group === gname);
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<div class="group-title">${gname} <span>${idx.length} tramas</span></div>`;
+    const grid = document.createElement("div"); grid.className = "bases";
+    for (const [b, i] of idx) {
+      const el = document.createElement("button"); el.type = "button"; el.className = "base"; el.dataset.i = i;
+      el.title = b.name; el.setAttribute("aria-label", `Trama ${b.code}: ${b.name}`);
+      const c = document.createElement("canvas"); c.width = 180; c.height = 180;
+      const sp = document.createElement("span"); sp.textContent = b.code;
+      el.append(c, sp); el.addEventListener("click", () => selectBase(i));
+      grid.append(el); thumbs[i] = c;
+    }
+    wrap.append(grid); $("#bases").append(wrap);
+  }
+}
+{
+  const sel = $("#baseSel");
+  for (const gname of [...new Set(BASES.map(b => b.group))]) {
+    const og = document.createElement("optgroup"); og.label = gname;
+    BASES.forEach((b, i) => { if (b.group !== gname) return; const o = document.createElement("option"); o.value = i; o.textContent = `${b.code} · ${b.name}`; og.append(o); });
+    sel.append(og);
+  }
+  sel.addEventListener("change", () => selectBase(+sel.value));
+}
+const thumbScale = b => { if (b.patch) return 26; const det = Math.abs(b.T1[0] * b.T2[1] - b.T1[1] * b.T2[0]); return Math.min(34, Math.sqrt(32400 / (det * 4))); };
+let thumbJob = 0;
+function drawThumbs() {
+  const job = ++thumbJob; let k = 0;
+  const step = () => {
+    if (job !== thumbJob) return;
+    for (let n = 0; n < 3 && k < BASES.length; n++) {
+      const i = k++, b = BASES[i];
+      const g = i === S.base ? geom : makeGeom(i, b.theta, 0);
+      const col = i === S.base ? colors : assignColors(families(g), palette(), S.colorSeed);
+      const c2 = thumbs[i].getContext("2d"); c2.setTransform(1, 0, 0, 1, 0, 0);
+      const scale = thumbScale(b);
+      drawPattern(makeCanvasPen(c2), 180, 180, { base: i, mode: S.mode, geom: g, colors: col, baseColors: kidColors(g, palette(), S.colorSeed), pal: palette(),
+        size: scale, band: Math.max(2, S.band * scale / Math.max(S.size, 1)), lw: 1, off: { x: 0, y: 0 }, showBase: false });
+    }
+    if (k < BASES.length) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------- Copiar SVG ---------- */
+const toast = msg => { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 1800); };
+$("#copySvg").addEventListener("click", () => {
+  const pen = makeSvgPen();
+  drawPattern(pen, W, H, { ...S, geom, colors, baseColors, pal: palette() });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(W)}" height="${Math.round(H)}" viewBox="0 0 ${Math.round(W)} ${Math.round(H)}">${pen.out.join("")}</svg>`;
+  navigator.clipboard.writeText(svg).then(() => toast("SVG copiado al portapapeles")).catch(() => toast("El portapapeles no está disponible en esta vista"));
+});
+
+refresh();
+drawThumbs();
+</script>
+
+</body></html>
