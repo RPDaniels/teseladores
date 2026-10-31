@@ -2,10 +2,10 @@
 
 Dos generadores de teselaciones que funcionan en el navegador. Cada uno es una única página HTML, sin instalación ni servidor.
 
-| Programa | Qué genera | Archivo |
-|---|---|---|
-| **Teseliso** | Teselaciones con **una sola forma** repetida, al estilo de Escher | `arabesco.html` |
-| **Alhambra** | Lazos islámicos con **muchas formas combinadas**: estrellas, rosetas y rombos | `alhambra.html` |
+| Programa | Qué genera | Abrir | Archivo |
+|---|---|---|---|
+| **Teseliso** | Teselaciones con **una sola forma** repetida, al estilo de Escher | [rpdaniels.github.io/teseladores/Teseliso.html](https://rpdaniels.github.io/teseladores/Teseliso.html) | [`Teseliso.html`](Teseliso.html) |
+| **Alhambra** | Lazos islámicos con **muchas formas combinadas**: estrellas, rosetas y rombos | [rpdaniels.github.io/teseladores/Alhambra.html](https://rpdaniels.github.io/teseladores/Alhambra.html) | [`Alhambra.html`](Alhambra.html) |
 
 Los dos generan diseños al azar y permiten elegir el tipo de teselación y la paleta de colores. También se puede desplazar el dibujo arrastrándolo y copiar la vista actual como SVG.
 
@@ -153,4 +153,3 @@ Alhambra no necesita bibliotecas externas y funciona sin conexión, salvo las ti
 - E. H. Hankin, *The Drawing of Geometric Patterns in Saracenic Art*, 1925.
 - C. S. Kaplan, *Islamic Star Patterns from Polygons in Contact*, 2005, y la biblioteca [Tactile](https://github.com/isohedral/tactile-js).
 - P. J. Lu y P. J. Steinhardt, «Decagonal and Quasi-Crystalline Tilings in Medieval Islamic Architecture», *Science*, 2007.
-
